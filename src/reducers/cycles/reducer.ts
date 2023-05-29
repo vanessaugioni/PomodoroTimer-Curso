@@ -1,3 +1,5 @@
+import { ActionTypes } from "./actions"
+
 export interface Cycle {
     id: string
     task: string
@@ -12,7 +14,7 @@ interface CyclesStore {
     cycles: Cycle[]
     activeCycleId: string | null; 
 }
-  
+
 export function cyclesReducer (state: CyclesStore, action: any) {
 
     switch(action.type) {
@@ -25,7 +27,7 @@ export function cyclesReducer (state: CyclesStore, action: any) {
     }
       case ActionTypes.INTERRUPT_CURRENT_CYCLE:
         return {
-          ...state, 
+          ...state,
           cycles: [state.cycles.map((cycle) => {
             if (cycle.id === state.activeCycleId) {
               return { ...cycle, interruptedDate: new Date() }
