@@ -1,20 +1,12 @@
-import { ReactNode, createContext, useState } from "react";
+import { ReactNode, createContext, useState, useReducer } from "react";
+import { ActionTypes } from "../reducers/cycles/actions";
+import { Cycle, cyclesReducer } from '../reducers/cycles/reducer'
 
 interface CreateCycleData{
     task: string
     minutesAmount: number
 
 }
-
-interface Cycle {
-    id: string
-    task: string
-    minutesAmount: number
-    startDate: Date
-    interruptedDate?: Date
-    finishedDate?: Date
-  }
-  
 
 interface CyclesContextType {
     cycles:Cycle[]
@@ -26,7 +18,6 @@ interface CyclesContextType {
     createNewCycle: (data: CreateCycleData) => void
     interruptionCurrantCycle: () => void
   }
-  
 
 export const CyclesContext = createContext({} as CyclesContextType)
 
@@ -34,12 +25,20 @@ interface CyclesContextProvierProps{
     children: ReactNode
 }
 
+
 export function CyclesContextProvier({
     children, 
-}: CyclesContextProvierProps) {
-  const [cycles, setCycles] = useState<Cycle[]>([])
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+
+      }: CyclesContextProvierProps){
+        const [cyclesState, dispatch] = useReducer(cyclesReducer,{
+      cycles:[], 
+      activeCycleId: null,
+    }, 
+  )
+
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+
+  const { cycles, activeCycleId } = cyclesState
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
@@ -49,17 +48,15 @@ export function CyclesContextProvier({
   }
 
   function markCurrentCycleAsFinished() {
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return { ...cycle, finishedDate: new Date() }
-        } else {
-          return cycle
-        }
-      }),
-    )
-  }
+    dispatch({
+      type: ActionTypes.MARK_CURRENT_CYCLE_AS_FINISHED, 
+      payload: {
+        activeCycleId, 
 
+      },
+    })
+
+  }
 
   function createNewCycle(data: CreateCycleData) {
     const id = String(new Date().getTime())
@@ -71,22 +68,24 @@ export function CyclesContextProvier({
       startDate: new Date(),
     }
 
-    setCycles((state) => [...state, newCycle])
-    setActiveCycleId(id)
+    dispatch({
+      type: ActionTypes.ADD_NEW_CYCLE, 
+      payload: {
+        newCycle, 
+      }
+    })
+
     setAmountSecondsPassed(0)
   }
 
   function interruptionCurrantCycle() {
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return { ...cycle, interruptedDate: new Date() }
-        } else {
-          return cycle
-        }
-      }),
-    )
-    setActiveCycleId(null)
+    dispatch({
+      type: ActionTypes.INTERRUPT_CURRENT_CYCLE, 
+      payload: {
+        activeCycleId,
+      },
+    })
+
   }
 
     return(
@@ -100,12 +99,7 @@ export function CyclesContextProvier({
             setSecondsPassed,
             createNewCycle, 
             interruptionCurrantCycle, 
-            
           }}
           >
             {children}
-            </CyclesContext.Provider>
-
-    )
-
-}
+              </CyclesContext.Provider> )}
